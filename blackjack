@@ -1,0 +1,168 @@
+#include <iostream>
+#include <random>
+using namespace std;
+
+/*Rolls a 2-10, jack, queen, or ace and returns value
+return int  the value of the selected card*/
+
+int rollDice();
+
+/*returns a valid wager amount
+0 < wager <= money
+param int money Total cash on hand for the player
+return int the player wager*/
+
+int getWager(int money);
+
+/*Do all the things that are on a players turn
+param int money players current cash on hand
+param int& wager returns the amount wagered this turn
+param bool& bust returns true if the player went over 21
+param in& total return the player's card total
+param int& houseRoll returns teh house card total (first card)*/
+void playerTurn(int money, int& wager, bool& bust, int& total, int& houseRoll);
+
+/* Implements logic for one round for the house
+param int houseRoll this is the initial cardTotal for the house
+param bool& bust returns true if the house busted
+param int& total return the house cardTotal*/
+void houseTurn(int houseRoll, bool& bust, int& total);
+
+int main() {
+	int repeat = 0;
+	char again = ' ';
+	int playerTotal = 0, houseTotal = 0;
+	int money = 100, wager = 0;
+	bool playerBust = false, houseBust = false;
+	while (repeat != 1) {
+		wager = 0, playerTotal = 0, houseTotal = 0;
+		playerTurn(money, wager, playerBust, playerTotal, houseTotal);
+		if (playerBust) {
+			money -= wager;
+		}
+		else {
+			houseTurn(houseTotal, houseBust, houseTotal);
+			if (houseBust) {
+				money += wager;
+			}
+			else {
+				if (playerTotal > houseTotal) {
+					cout << "you win!" << endl;
+					money += wager;
+				}
+				else {
+					cout << "You lose!" << endl;
+					money -= wager;
+				}
+			}
+
+		}
+		cout << "money: " << money << endl;
+		cout << "wager: " << wager << endl;
+		if (money > 0) {
+			cout << "Wanna try again?: ";
+			cin >> again;
+			switch (again) {
+			case 'Y':
+			case 'y':
+				cout << "try me" << endl;
+				break;
+			case 'n':
+			case'N':
+				cout << "loser" << endl;
+				repeat++;
+				break;
+			default:
+				cout << "ur dumb" << endl;
+				repeat++;
+			}
+		}
+		else
+		{
+			cout << "You lost!" << endl;
+			repeat++;
+		}
+		
+	}
+	return 0;
+}
+
+int rollDice()
+{
+	int roll = 0;
+	int cardValue = 0;
+	random_device generator;
+	uniform_int_distribution<int> distribution(2, 14);
+	roll = distribution(generator);
+	if (roll == 14) {
+		cardValue = 11;
+	}
+	else if (roll == 13) {
+		cardValue = 10;
+	}
+	else if (roll == 12) {
+		cardValue = 10;
+	}
+	else if (roll == 11) {
+		cardValue = 10;
+	}
+	else {
+		cardValue = roll;
+	}
+	return cardValue;
+}
+
+int getWager(int money)
+{
+	int wager;
+	do {
+		cout << "How much will you wager? (1 - " << money << "): ";
+		cin >> wager;
+		if (cin.fail()) {
+			cin.clear();
+			cin.ignore();
+		}
+	} while (!(0 < wager && wager <= money));
+	return wager;
+}
+
+void playerTurn(int money, int& wager, bool& bust, int& total, int& houseRoll)
+{
+	char hitOrStand = 'H';
+	//human player enters a wager
+	wager = getWager(money);
+	//player is given two rolls and house is given one.
+	total = rollDice() + rollDice();
+	houseRoll = rollDice();
+	cout << "The house has " << houseRoll << ", you have " << total << "." << endl;
+	//hit or stand
+	while ((total < 22) && ((hitOrStand != 'S') && (hitOrStand != 's'))) {
+		// ask hit or stand
+		cout << "Hit or stand?: ";
+		cin >> hitOrStand; //error check and convert to upper
+		if (hitOrStand == 'H' || hitOrStand == 'h') {
+			total += rollDice();
+			cout << "You now have " << total << "." << endl;
+		}
+	}
+	bust = (total >= 22);
+	if (bust) {
+		cout << "You busted!" << endl;
+	}
+}
+
+void houseTurn(int houseRoll, bool& bust, int& total)
+{
+	total = houseRoll; // from the initial card in the okayers turn
+	total += rollDice();
+	cout << "The house has " << total << endl;
+	while ((total < 17) && (total < 22))  {
+		cout << "I will draw again........................" << endl;
+		total += rollDice();
+		cout << "The house now has " << total << endl;
+	}
+	bust = (total >= 22);
+	if (bust) {
+		cout << "The house busted" << endl;
+	}
+}
